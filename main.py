@@ -48,8 +48,10 @@ def analyze_traffic(input_file, file_type, ip_address, port, protocol, num_rows,
     try:
         if file_type == "csv":
             try:
-                df = pd.read_csv(input_file)  # Consider specifying encoding if necessary, e.g., encoding='utf-8'
-                if num_rows:
+                df = pd.read_csv(input_file)
+                if num_rows is not None:
+                    if num_rows < 0:
+                        raise ValueError("Number of rows must not be negative.")
                     df = df.head(num_rows)
             except FileNotFoundError:
                 logging.error(f"Input file not found: {input_file}")
@@ -62,8 +64,11 @@ def analyze_traffic(input_file, file_type, ip_address, port, protocol, num_rows,
                 raise
 
         elif file_type == "pcap":
+            # PCAP is accepted by the CLI but never parsed, so this empty
+            # frame means "not implemented", not "no traffic matched". A
+            # caller cannot tell the two apart from the output alone.
             logging.warning("PCAP file parsing is not yet implemented.  Returning an empty DataFrame.")
-            df = pd.DataFrame()  # Placeholder.  Requires a proper PCAP parsing library like dpkt or scapy.
+            df = pd.DataFrame()
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
         
@@ -89,7 +94,7 @@ def analyze_traffic(input_file, file_type, ip_address, port, protocol, num_rows,
         if ip_address:
             df = df[(df['Source IP'] == ip_address) | (df['Destination IP'] == ip_address)]  # Assuming 'Source IP' and 'Destination IP' columns
 
-        if port:
+        if port is not None:
             df = df[(df['Source Port'] == port) | (df['Destination Port'] == port)]  # Assuming 'Source Port' and 'Destination Port' columns
 
         if protocol:
@@ -101,10 +106,10 @@ def analyze_traffic(input_file, file_type, ip_address, port, protocol, num_rows,
         if dst_ip:
             df = df[df['Destination IP'] == dst_ip]
         
-        if src_port:
+        if src_port is not None:
             df = df[df['Source Port'] == src_port]
             
-        if dst_port:
+        if dst_port is not None:
             df = df[df['Destination Port'] == dst_port]
 
         if df.empty:
@@ -114,15 +119,18 @@ def analyze_traffic(input_file, file_type, ip_address, port, protocol, num_rows,
 
         return df
 
+    # Errors return None, not an empty frame. An empty frame is a real
+    # result (the filters matched nothing); returning one for a missing
+    # file or a bad port used to make main print it and exit 0.
     except FileNotFoundError as e:
         logging.error(f"File not found: {e}")
-        return pd.DataFrame()  # Return an empty DataFrame in case of error
+        return None
     except ValueError as e:
         logging.error(f"Invalid input: {e}")
-        return pd.DataFrame()  # Return an empty DataFrame in case of error
+        return None
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
-        return pd.DataFrame() # Return an empty DataFrame in case of error
+        return None
 
 def main():
     """
@@ -132,6 +140,8 @@ def main():
 
     try:
         analyzed_data = analyze_traffic(args.input_file, args.file_type, args.ip_address, args.port, args.protocol, args.num_rows, args.src_ip, args.dst_ip, args.src_port, args.dst_port)
+        if analyzed_data is None:
+            sys.exit(1)
 
         if args.output_file:
             try:
