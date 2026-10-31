@@ -1,6 +1,8 @@
 import argparse
+import ipaddress
 import logging
 import pandas as pd
+import struct
 import sys
 
 # Configure logging
@@ -13,7 +15,7 @@ def setup_argparse():
     parser = argparse.ArgumentParser(description="Analyze network traffic patterns - Focused on Data analysis and reporting.")
     parser.add_argument("input_file", help="Path to the input traffic data file (e.g., CSV, PCAP).")
     parser.add_argument("-o", "--output_file", help="Path to the output report file (e.g., CSV, TXT).  Defaults to stdout.", default=None)
-    parser.add_argument("-f", "--file_type", help="Type of the input file (csv, pcap, etc.).  Defaults to csv.", default="csv", choices=['csv', 'pcap'])
+    parser.add_argument("-f", "--file_type", help="Type of the input file: csv or pcap. PCAP captures are parsed into the CSV column shape; a truncated or malformed capture exits 1.  Defaults to csv.", default="csv", choices=['csv', 'pcap'])
     parser.add_argument("-ip", "--ip_address", help="Filter traffic by a specific IP address.", default=None)
     parser.add_argument("-p", "--port", type=int, help="Filter traffic by a specific port number.", default=None)
     parser.add_argument("-proto", "--protocol", help="Filter traffic by a specific protocol (e.g., TCP, UDP).", default=None)
@@ -24,6 +26,224 @@ def setup_argparse():
     parser.add_argument("--dst_port", type=int, help="Filter by destination port.", default=None)
 
     return parser.parse_args()
+
+
+# PCAP parsing, pure standard library. The parser reads the classic PCAP
+# container (both endiannesses, microsecond and nanosecond timestamps)
+# and decodes each packet into the same column shape the CSV branch
+# produces and the filters below read: Source IP, Destination IP,
+# Source Port, Destination Port, and Protocol, plus Timestamp and
+# Length. A truncated or malformed capture raises ValueError, which
+# analyze_traffic turns into a failed run at exit 1, never an empty
+# result at exit 0.
+PCAP_COLUMNS = ['Timestamp', 'Source IP', 'Destination IP', 'Source Port',
+                'Destination Port', 'Protocol', 'Length']
+
+_PROTOCOL_NAMES = {
+    1: "ICMP",
+    2: "IGMP",
+    6: "TCP",
+    17: "UDP",
+    58: "ICMPv6",
+    132: "SCTP",
+}
+
+_LINKTYPE_ETHERNET = 1
+_LINKTYPE_NULL = 0
+_LINKTYPE_RAW = 101
+_LINKTYPE_RAW_ALT = 12
+_LINKTYPE_LINUX_SLL = 113
+_LINKTYPE_LINUX_SLL2 = 276
+_SUPPORTED_LINKTYPES = {
+    _LINKTYPE_ETHERNET, _LINKTYPE_NULL, _LINKTYPE_RAW, _LINKTYPE_RAW_ALT,
+    _LINKTYPE_LINUX_SLL, _LINKTYPE_LINUX_SLL2,
+}
+
+
+def _protocol_name(number):
+    return _PROTOCOL_NAMES.get(number, str(number))
+
+
+def _decode_ip_packet(ip_data):
+    """Decode one IPv4 or IPv6 packet into a filter row, or return None
+    for a packet that is not IP. Raises ValueError on a truncated header."""
+    if len(ip_data) < 1:
+        raise ValueError("Truncated packet: no IP header bytes.")
+    version = ip_data[0] >> 4
+    if version == 4:
+        if len(ip_data) < 20:
+            raise ValueError("Truncated packet: incomplete IPv4 header.")
+        header_len = (ip_data[0] & 0x0F) * 4
+        if header_len < 20 or len(ip_data) < header_len:
+            raise ValueError("Truncated packet: incomplete IPv4 header.")
+        total_length = struct.unpack_from(">H", ip_data, 2)[0]
+        protocol_number = ip_data[9]
+        source = str(ipaddress.IPv4Address(ip_data[12:16]))
+        destination = str(ipaddress.IPv4Address(ip_data[16:20]))
+        fragment_offset = struct.unpack_from(">H", ip_data, 6)[0] & 0x1FFF
+        end = total_length if 0 < total_length <= len(ip_data) else len(ip_data)
+        transport = ip_data[header_len:end]
+    elif version == 6:
+        if len(ip_data) < 40:
+            raise ValueError("Truncated packet: incomplete IPv6 header.")
+        protocol_number = ip_data[6]
+        source = str(ipaddress.IPv6Address(ip_data[8:24]))
+        destination = str(ipaddress.IPv6Address(ip_data[24:40]))
+        fragment_offset = 0
+        offset = 40
+        # Walk the common extension headers so the ports below come from
+        # the real transport header. Anything unrecognised stops the walk
+        # and is reported under its own protocol number.
+        for _ in range(8):
+            if protocol_number in (0, 43, 60):  # hop by hop, routing, destination options
+                if len(ip_data) < offset + 2:
+                    raise ValueError("Truncated packet: incomplete IPv6 extension header.")
+                next_header = ip_data[offset]
+                offset += (ip_data[offset + 1] + 1) * 8
+                protocol_number = next_header
+            elif protocol_number == 44:  # fragment
+                if len(ip_data) < offset + 8:
+                    raise ValueError("Truncated packet: incomplete IPv6 fragment header.")
+                next_header = ip_data[offset]
+                fragment_offset = struct.unpack_from(">H", ip_data, offset + 2)[0] >> 3
+                offset += 8
+                protocol_number = next_header
+            elif protocol_number == 51:  # authentication header
+                if len(ip_data) < offset + 2:
+                    raise ValueError("Truncated packet: incomplete IPv6 authentication header.")
+                next_header = ip_data[offset]
+                offset += (ip_data[offset + 1] + 2) * 4
+                protocol_number = next_header
+            else:
+                break
+        if len(ip_data) < offset:
+            raise ValueError("Truncated packet: IPv6 extension headers run past the packet.")
+        transport = ip_data[offset:]
+    else:
+        return None
+
+    source_port = None
+    destination_port = None
+    # Ports exist only in the first fragment of a TCP, UDP, or SCTP packet.
+    if protocol_number in (6, 17, 132) and fragment_offset == 0 and len(transport) >= 4:
+        source_port, destination_port = struct.unpack_from(">HH", transport, 0)
+
+    return {
+        'Source IP': source,
+        'Destination IP': destination,
+        'Source Port': source_port,
+        'Destination Port': destination_port,
+        'Protocol': _protocol_name(protocol_number),
+    }
+
+
+def _decode_link_packet(packet, linktype, endian):
+    """Strip the link layer header and decode the IP packet inside.
+    Returns None for a non IP packet (for example ARP). Raises
+    ValueError on a packet too short for its link header."""
+    if linktype == _LINKTYPE_ETHERNET:
+        if len(packet) < 14:
+            raise ValueError("Truncated packet: incomplete Ethernet header.")
+        ether_type = struct.unpack_from(">H", packet, 12)[0]
+        offset = 14
+        while ether_type in (0x8100, 0x88A8):  # VLAN tags
+            if len(packet) < offset + 4:
+                raise ValueError("Truncated packet: incomplete VLAN tag.")
+            ether_type = struct.unpack_from(">H", packet, offset + 2)[0]
+            offset += 4
+        if ether_type == 0x0800:
+            ip_version = 4
+        elif ether_type == 0x86DD:
+            ip_version = 6
+        else:
+            return None
+        ip_data = packet[offset:]
+        if len(ip_data) < 1 or (ip_data[0] >> 4) != ip_version:
+            raise ValueError("Truncated packet: link header promises an IP packet that is not there.")
+        return _decode_ip_packet(ip_data)
+    if linktype == _LINKTYPE_LINUX_SLL:
+        if len(packet) < 16:
+            raise ValueError("Truncated packet: incomplete Linux cooked header.")
+        ether_type = struct.unpack_from(">H", packet, 14)[0]
+        if ether_type not in (0x0800, 0x86DD):
+            return None
+        return _decode_ip_packet(packet[16:])
+    if linktype == _LINKTYPE_LINUX_SLL2:
+        if len(packet) < 20:
+            raise ValueError("Truncated packet: incomplete Linux cooked v2 header.")
+        ether_type = struct.unpack_from(">H", packet, 0)[0]
+        if ether_type not in (0x0800, 0x86DD):
+            return None
+        return _decode_ip_packet(packet[20:])
+    if linktype in (_LINKTYPE_RAW, _LINKTYPE_RAW_ALT):
+        return _decode_ip_packet(packet)
+    if linktype == _LINKTYPE_NULL:
+        if len(packet) < 4:
+            raise ValueError("Truncated packet: incomplete loopback header.")
+        address_family = struct.unpack_from(endian + "I", packet, 0)[0]
+        if address_family not in (2, 24, 28, 30):  # AF_INET, and the BSD AF_INET6 values
+            return None
+        return _decode_ip_packet(packet[4:])
+    raise ValueError(f"Unsupported PCAP link type: {linktype}")
+
+
+def parse_pcap_file(input_file):
+    """
+    Parses a PCAP capture file into a DataFrame with the CSV column shape.
+
+    Raises FileNotFoundError when the file does not exist and ValueError
+    when the capture is truncated, malformed, or uses an unsupported
+    link type, so a bad capture fails the run instead of reading as an
+    empty result.
+    """
+    with open(input_file, "rb") as handle:
+        data = handle.read()
+
+    if len(data) < 24:
+        raise ValueError(f"PCAP file is too short to hold a PCAP header: {input_file}")
+    magic = data[:4]
+    if magic == b"\xa1\xb2\xc3\xd4":
+        endian, fraction_divisor = ">", 1_000_000
+    elif magic == b"\xd4\xc3\xb2\xa1":
+        endian, fraction_divisor = "<", 1_000_000
+    elif magic == b"\xa1\xb2\x3c\x4d":
+        endian, fraction_divisor = ">", 1_000_000_000
+    elif magic == b"\x4d\x3c\xb2\xa1":
+        endian, fraction_divisor = "<", 1_000_000_000
+    else:
+        raise ValueError(f"Not a PCAP file (bad magic number): {input_file}")
+
+    _major, _minor, _thiszone, _sigfigs, _snaplen, linktype = struct.unpack_from(endian + "HHiIII", data, 4)
+    if linktype not in _SUPPORTED_LINKTYPES:
+        raise ValueError(f"Unsupported PCAP link type: {linktype}")
+
+    rows = []
+    skipped_non_ip = 0
+    offset = 24
+    while offset < len(data):
+        if len(data) - offset < 16:
+            raise ValueError(f"Truncated PCAP file: packet record header at byte {offset} is incomplete.")
+        ts_seconds, ts_fraction, captured_len, original_len = struct.unpack_from(endian + "IIII", data, offset)
+        offset += 16
+        if len(data) - offset < captured_len:
+            raise ValueError(
+                f"Truncated PCAP file: packet at byte {offset} claims {captured_len} bytes, "
+                f"only {len(data) - offset} remain."
+            )
+        packet = data[offset:offset + captured_len]
+        offset += captured_len
+        row = _decode_link_packet(packet, linktype, endian)
+        if row is None:
+            skipped_non_ip += 1
+            continue
+        row['Timestamp'] = ts_seconds + ts_fraction / fraction_divisor
+        row['Length'] = original_len
+        rows.append(row)
+
+    if skipped_non_ip:
+        logging.info(f"PCAP parsing skipped {skipped_non_ip} non IP packet(s).")
+    logging.info(f"PCAP parsing read {len(rows)} IP packet(s) from {input_file}")
+    return pd.DataFrame(rows, columns=PCAP_COLUMNS)
 
 
 def analyze_traffic(input_file, file_type, ip_address, port, protocol, num_rows, src_ip, dst_ip, src_port, dst_port):
@@ -64,11 +284,15 @@ def analyze_traffic(input_file, file_type, ip_address, port, protocol, num_rows,
                 raise
 
         elif file_type == "pcap":
-            # PCAP is accepted by the CLI but never parsed, so this empty
-            # frame means "not implemented", not "no traffic matched". A
-            # caller cannot tell the two apart from the output alone.
-            logging.warning("PCAP file parsing is not yet implemented.  Returning an empty DataFrame.")
-            df = pd.DataFrame()
+            # Real PCAP parsing in the standard library (see
+            # parse_pcap_file). A truncated or malformed capture raises
+            # and fails the run at exit 1; it never reads as an empty
+            # result.
+            df = parse_pcap_file(input_file)
+            if num_rows is not None:
+                if num_rows < 0:
+                    raise ValueError("Number of rows must not be negative.")
+                df = df.head(num_rows)
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
         
@@ -164,6 +388,6 @@ if __name__ == "__main__":
     # Example Usage:
     # python main.py traffic_data.csv -ip 192.168.1.1 -o output.csv
     # python main.py traffic_data.csv -p 80
-    # python main.py traffic_data.csv -f pcap  (PCAP support not fully implemented)
+    # python main.py capture.pcap -f pcap -proto TCP
     # python main.py traffic_data.csv -n 100
     main()
