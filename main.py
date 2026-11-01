@@ -202,6 +202,9 @@ def parse_pcap_file(input_file):
     if len(data) < 24:
         raise ValueError(f"PCAP file is too short to hold a PCAP header: {input_file}")
     magic = data[:4]
+    # Classic PCAP only. A pcapng capture, which is what current
+    # Wireshark writes by default, fails this magic test and exits as
+    # not a PCAP file; the error is honest about it, at least.
     if magic == b"\xa1\xb2\xc3\xd4":
         endian, fraction_divisor = ">", 1_000_000
     elif magic == b"\xd4\xc3\xb2\xa1":
@@ -236,6 +239,12 @@ def parse_pcap_file(input_file):
         if row is None:
             skipped_non_ip += 1
             continue
+        # The timestamp is a float of epoch seconds, so at current
+        # epoch values a float64 keeps about microsecond resolution:
+        # a nanosecond capture's last digits are rounded away here.
+        # Length is the wire length from the record header, not the
+        # captured length, so a snaplen truncated packet still reports
+        # the size it had on the wire.
         row['Timestamp'] = ts_seconds + ts_fraction / fraction_divisor
         row['Length'] = original_len
         rows.append(row)
@@ -314,7 +323,15 @@ def analyze_traffic(input_file, file_type, ip_address, port, protocol, num_rows,
             if not isinstance(dst_port, int) or dst_port < 0 or dst_port > 65535:
                 raise ValueError("Destination port must be an integer between 0 and 65535.")
 
-        # Filtering data
+        # num_rows was applied at load time, above, so it limits the
+        # rows the filters see, not the rows the filters return: the
+        # first hundred rows of the file, filtered, which can be none
+        # of them even when matches exist later in the file. The
+        # protocol test is an exact string match, and the two input
+        # branches spell values differently, the PCAP parser produces
+        # TCP in capitals while a CSV carries whatever its author
+        # wrote, so the same filter value can match one source and
+        # silently miss the other.
         if ip_address:
             df = df[(df['Source IP'] == ip_address) | (df['Destination IP'] == ip_address)]  # Assuming 'Source IP' and 'Destination IP' columns
 
