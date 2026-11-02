@@ -1,7 +1,19 @@
-![Banner](banner.png)
+![The sextant maker's shop before any name is given: a flat sextant frame on the bench, finished sextants on the shelf, rolled charts, feathers on the sill, no readable mark anywhere](intro-banner.png)
+
+# analyze-traffic
+
+![The shop window with the name painted in reverse on the inside of the glass, read from the street, one buoy orange stroke under the final letter](banner.png)
+
+![Brass sextant in profile with horizon and shade glasses and two mirror flecks, the heading plate](logo.png)
+
+![Bench scene in the shop window: masts sway far off in the doorway, a highlight travels along the shelf of finished sextants, dust drifts in the near light](scene.svg)
+
 
 # analyze-traffic
 Analyze network traffic patterns from a CSV file or a PCAP capture - Focused on Data analysis and reporting
+
+
+![Section divider](sep-light.svg)
 
 ## Input formats
 
@@ -9,11 +21,26 @@ CSV input is read with the columns Source IP, Destination IP, Source Port, Desti
 
 PCAP input (`-f pcap`) is parsed by the tool itself, in the Python standard library, into the same columns, plus Timestamp and Length. Both byte orders and both timestamp resolutions (microsecond and nanosecond) are read. Supported link types are Ethernet (including VLAN tagged frames), raw IP (link types 101 and 12), Linux cooked capture v1 and v2 (113 and 276), and loopback (0). IPv4 and IPv6 packets are decoded: source and destination addresses, protocol, and the TCP, UDP, or SCTP ports. Protocol is recorded as a name (TCP, UDP, ICMP, ICMPv6, IGMP, SCTP) or as the IP protocol number for anything else. Packets that are not IP, such as ARP, are skipped and counted in the log. Other link types are not supported. A truncated or malformed capture is an error and the run exits 1; it is never reported as an empty result.
 
+> Maker's tag: a truncated or malformed capture is an error and the run exits 1. It is never reported as an empty result.
+
+> Maker's tag: packets that are not IP, such as ARP, are skipped and counted in the log. Other link types are not supported.
+
+
+![Section divider](sep-heavy.svg)
+
 ## Install
 `git clone https://github.com/ShadowStrikeHQ/analyze-traffic`
 
+
+![Section divider](sep-light.svg)
+
 ## Usage
 `./analyze-traffic [params]`
+
+> Maker's tag: the usage line names no input file argument. How the CSV or PCAP file itself is supplied is not spelled out in that line.
+
+
+![Section divider](sep-heavy.svg)
 
 ## Parameters
 - `-h`: Show help message and exit
@@ -27,6 +54,9 @@ PCAP input (`-f pcap`) is parsed by the tool itself, in the Python standard libr
 - `--dst_ip`: Filter by destination IP.
 - `--src_port`: Filter by source port.
 - `--dst_port`: Filter by destination port.
+
+
+![Section divider](sep-heavy.svg)
 
 ## License
 Copyright (c) ShadowStrikeHQ

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-label="The bench from the customer's side of the window: masts sway in the far doorway, a highlight travels along the shelf of finished sextants in the middle, and dust drifts in the near light">
+<rect x="0" y="0" width="1200" height="300" fill="#2e3842"/>
+<rect x="30" y="24" width="430" height="196" fill="#7fb5a3"/>
+<rect x="30" y="24" width="430" height="196" fill="none" stroke="#161e24" stroke-width="8"/>
+<line x1="245" y1="24" x2="245" y2="220" stroke="#161e24" stroke-width="6"/>
+<line x1="30" y1="122" x2="460" y2="122" stroke="#161e24" stroke-width="6"/>
+<g>
+<rect x="980" y="52" width="130" height="196" fill="#d8dcce"/>
+<rect x="980" y="52" width="130" height="196" fill="none" stroke="#141a20" stroke-width="6"/>
+<g stroke="#464a44" stroke-width="3">
+<g><animateTransform attributeName="transform" type="rotate" values="-1.4 1018 240;1.4 1018 240;-1.4 1018 240" dur="9s" repeatCount="indefinite"/><line x1="1006" y1="240" x2="1030" y2="76"/></g>
+<g><animateTransform attributeName="transform" type="rotate" values="1.2 1066 240;-1.2 1066 240;1.2 1066 240" dur="11s" repeatCount="indefinite"/><line x1="1054" y1="240" x2="1078" y2="88"/></g>
+</g>
+<rect x="980" y="52" width="130" height="196" fill="#2e3842" opacity="0"><animate attributeName="opacity" values="0;0;0.38;0.38;0;0" keyTimes="0;0.3;0.42;0.6;0.72;1" dur="16s" repeatCount="indefinite"/></rect>
+</g>
+<rect x="700" y="70" width="34" height="52" fill="#232a30"/>
+<polygon points="704,70 730,70 722,50 712,50" fill="#1a2126"/>
+<rect x="40" y="196" width="760" height="8" fill="#141a20"/>
+<g fill="none" stroke="#b08d3c" stroke-width="6">
+<path d="M70 196 A55 55 0 0 1 180 196"/><path d="M230 196 A55 55 0 0 1 340 196"/><path d="M390 196 A55 55 0 0 1 500 196"/><path d="M550 196 A55 55 0 0 1 660 196"/>
+</g>
+<g fill="#2c363c" stroke="#c9a44a" stroke-width="2">
+<rect x="96" y="152" width="16" height="24"/><rect x="256" y="152" width="16" height="24"/><rect x="416" y="152" width="16" height="24"/><rect x="576" y="152" width="16" height="24"/>
+</g>
+<ellipse cx="105" cy="168" rx="90" ry="62" fill="#f4f1de" opacity="0">
+<animate attributeName="cx" values="105;265;425;585;700;700" keyTimes="0;0.22;0.44;0.66;0.82;1" dur="18s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="0;0.30;0.30;0.30;0.34;0" keyTimes="0;0.08;0.44;0.66;0.82;1" dur="18s" repeatCount="indefinite"/>
+</ellipse>
+<rect x="0" y="238" width="1200" height="62" fill="#3a332a"/>
+<path d="M600 268 A120 120 0 0 1 840 268" fill="none" stroke="#b08d3c" stroke-width="12"/>
+<rect x="690" y="196" width="26" height="34" fill="#232e33" stroke="#c9a44a" stroke-width="2"/>
+<g fill="#f2efe6">
+<circle cx="180" cy="40" r="2.4"><animate attributeName="cy" values="40;210" dur="13s" repeatCount="indefinite"/><animate attributeName="cx" values="180;205" dur="13s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="13s" repeatCount="indefinite"/></circle>
+<circle cx="330" cy="30" r="1.8"><animate attributeName="cy" values="30;200" dur="17s" begin="3s" repeatCount="indefinite"/><animate attributeName="cx" values="330;352" dur="17s" begin="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0" dur="17s" begin="3s" repeatCount="indefinite"/></circle>
+<circle cx="90" cy="60" r="2"><animate attributeName="cy" values="60;215" dur="15s" begin="6s" repeatCount="indefinite"/><animate attributeName="cx" values="90;112" dur="15s" begin="6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.75;0" dur="15s" begin="6s" repeatCount="indefinite"/></circle>
+</g>
+<g transform="translate(500 232)"><path d="M0 0 L52 -7 M14 -2 L24 -12 M30 -4 L40 -13" stroke="#e8e4d0" stroke-width="2.6" fill="none"><animateTransform attributeName="transform" type="rotate" values="0 0 0;-5 0 0;0 0 0;0 0 0" keyTimes="0;0.12;0.24;1" dur="14s" repeatCount="indefinite"/></path></g>
+</svg>
