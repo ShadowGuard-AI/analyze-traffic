@@ -3,162 +3,97 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Analyze Traffic: what it is, how it runs, where it stops</title>
-<meta name="description" content="Analyze Traffic is one of my projects. The README in the repo is short, so this page sticks to what the files themselves show.">
+<title>analyze-traffic: The Sextant Maker's Window</title>
+<meta name="description" content="Analyze network traffic patterns from a CSV file or a PCAP capture. Focused on data analysis and reporting.">
 <style>
-:root {
-  --bg: #1e2014; --panel: #2c2e1e; --ink: #eeecdc;
-  --mut: #3b3e28;
-  --acc: #ceb25c; --acc2: #b2603e;
-  --line: #2c2e1e;
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink);
-  font-family: 'Book Antiqua', Georgia, serif; line-height: 1.55; }
-code, pre, .mono { font-family: 'Andale Mono', monospace; }
-a { color: var(--acc2); }
-.hero { padding: 3rem 6vw 1rem; }
-.hero img.banner { width: 100%; height: auto; border: 1px solid var(--line);
-  border-radius: 10px; }
-.logo { width: 92px; height: 92px; border-radius: 18px;
-  border: 1px solid var(--line); }
-h1 { font-size: 2.4rem; margin: 0.4em 0 0.1em; }
-h2 { border-bottom: 2px solid var(--acc); padding-bottom: 0.2em;
-  margin-top: 2em; }
-.lede { font-size: 1.15rem; max-width: 62ch; }
-main { padding: 0 6vw 3rem; max-width: 1180px; margin: 0 auto; }
-.grid { display: grid; gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-.card { background: var(--panel); border: 1px solid var(--line);
-  border-radius: 12px; padding: 1rem 1.2rem; }
-.card.pop { animation: rise 0.7s ease both; }
-@keyframes rise { from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; } }
-pre.code { background: #101014; color: #e8e6df; padding: 1rem 1.2rem;
-  border-radius: 12px; overflow-x: auto; font-size: 0.86rem;
-  border-left: 5px solid var(--acc); }
-table { border-collapse: collapse; width: 100%; }
-td, th { border-bottom: 1px solid var(--line); padding: 0.45rem 0.6rem;
-  text-align: left; }
-.shots { display: grid; gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-.shots img { width: 100%; height: auto; border: 1px solid var(--line);
-  border-radius: 10px; background: #f4f1e8; }
-footer { padding: 2rem 6vw; border-top: 1px solid var(--line);
-  color: var(--mut); }
-.rail { display: flex; gap: 1.2rem; align-items: flex-start; }
-.rail nav { position: sticky; top: 1rem; min-width: 180px; }
-@media (max-width: 760px) { .rail { flex-direction: column; }
-  .rail nav { position: static; } }
-@media (prefers-reduced-motion: reduce) {
-  .card.pop { animation: none; } * { scroll-behavior: auto; } }
+@font-face{font-family:'BIZ UDPGothic';src:url('fonts/BIZUDPGothic.ttf') format('truetype');}
+@font-face{font-family:'Bitter';src:url('fonts/Bitter.ttf') format('truetype');}
+:root{--slate:#2e3842;--slate2:#3a4652;--sea:#5e9684;--sealight:#7fb5a3;--chalk:#f2efe6;--brass:#b08d3c;--orange:#e86a1e;--ink:#22281f}
+*{box-sizing:border-box}body{margin:0;background:var(--slate);color:var(--chalk);font-family:'Bitter',serif;line-height:1.65}
+h1,h2,h3{font-family:'BIZ UDPGothic',sans-serif}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;background:var(--slate)}
+.hero img.heroimg{width:100%;height:60vh;object-fit:cover;display:block}
+.hero .in{padding:1rem 6vw 2rem;max-width:1120px;margin:0 auto;width:100%}
+.logo{width:190px;border-radius:6px}
+main{padding:0 6vw 3rem;max-width:1120px;margin:0 auto}
+nav{display:flex;gap:.9rem;flex-wrap:wrap;margin:1.2rem 0}
+.clasp{display:inline-block;text-decoration:none;color:var(--chalk);font-family:'BIZ UDPGothic',sans-serif;font-size:.92rem;padding:.55rem 1.3rem;background:var(--slate2);border:4px solid var(--brass);border-radius:999px;box-shadow:inset 0 0 0 2px var(--slate);transition:transform .1s,border-color .15s}
+.clasp:hover{border-color:var(--sealight)}
+.clasp:active{transform:translateY(4px)}
+.clasp:focus-visible{outline:3px solid var(--orange);outline-offset:-7px}
+.case{background:linear-gradient(160deg,#46635a,#3c574f);border:10px solid #24382f;border-radius:8px;box-shadow:inset 0 0 0 2px rgba(242,239,230,.35),inset 0 0 34px rgba(0,0,0,.35);padding:.4rem 1.5rem 1.3rem;margin:1.8rem 0}
+.case h2{border-bottom:1px solid rgba(242,239,230,.4);padding-bottom:.4rem}
+pre{background:#1d262e;color:var(--chalk);padding:1rem;overflow-x:auto;font-size:.95rem}
+a{color:#ffd9a8}
+a::before{content:'';display:inline-block;width:17px;height:8px;margin-right:.45em;vertical-align:2px;background:linear-gradient(100deg,#efece0 60%,#c9c4ae);border-radius:100% 4px 100% 4px;transform:rotate(-24deg)}
+.clasp::before{content:none}
+.rule{height:10px;margin:2.2rem 0;position:relative;background:repeating-linear-gradient(to right,var(--brass) 0 2px,transparent 2px 46px),linear-gradient(var(--brass),var(--brass));background-size:100% 10px,100% 2px;background-position:0 0,0 4px;background-repeat:no-repeat}
+.rule::after{content:'';position:absolute;left:50%;top:0;width:3px;height:10px;background:var(--orange)}
+.pin{display:flex;gap:1rem;padding:.5rem 0;border-bottom:1px solid rgba(242,239,230,.22)}
+.pin b{font-family:'BIZ UDPGothic',sans-serif;min-width:104px;color:#ffe9b0}
+.tag{background:#e9e2c8;color:var(--ink);border-radius:4px;padding:.2rem 1.3rem 1rem;margin:1.3rem 0;position:relative}
+.tag::before{content:'';position:absolute;top:10px;left:12px;width:12px;height:12px;border:2px solid #8a8266;border-radius:50%;background:var(--slate)}
+.tag h3{font-family:'BIZ UDPGothic',sans-serif;margin-left:1.4rem}
+.stop{border-top:3px solid var(--orange);padding-top:.6rem;font-weight:700}
+footer{padding:1rem 6vw 2.4rem;max-width:1120px;margin:0 auto}
 </style>
 </head>
-<body class="layout-note">
-<!-- This page exists for analyze-traffic alone: the layout (notebook),
-     the colors, and the type were picked for this project, not
-     shared with the other project pages. The code block below is
-     copied from the file it names, line for line. If it looks
-     plain, that is because the project is plain, and I would
-     rather the page match the project than dress it up. The one
-     thing I will not do here is oversell: what this project does
-     not do is stated on the page, not hidden from it. -->
+<body>
 <header class="hero">
-  <img class="logo" src="assets/logo.png" alt="Analyze Traffic logo">
-  <img class="banner" src="assets/banner.png" alt="">
-  <h1>Analyze Traffic</h1>
-  <p class="mono"><a href="https://github.com/ShadowGuard-AI/analyze-traffic">github.com/ShadowGuard-AI/analyze-traffic</a></p>
+<img class="heroimg" src="assets/intro-banner.png" alt="A sextant maker's bench under a salt filmed window: a flat sextant frame, finished sextants on a shelf, rolled charts, no text">
+<div class="in">
+<img class="logo" src="assets/logo.png" alt="A brass sextant in profile with two small mirror glasses, above the name analyze-traffic in chalk white">
+<h1>analyze-traffic</h1>
+<p>The maker's bench laid out left to right in the order work reaches him. Files arrive the way instruments arrive, and they are taken apart against known columns.</p>
+<nav>
+<a class="clasp" href="#arrives">What Comes In Off the Street</a>
+<a class="clasp" href="#frames">Frames the Bench Can Take</a>
+<a class="clasp" href="#pins">Pins in Their Recesses</a>
+<a class="clasp" href="#lid">What Is Stamped on the Lid</a>
+</nav>
+</div>
 </header>
-
 <main>
-  <section class="rail">
-    <nav aria-label="on this page">
-      <p class="mono"><a href="#run">Run it</a><br>
-      <a href="#files">The files</a><br>
-      <a href="#sheets">The sheets</a><br>
-      <a href="https://github.com/ShadowGuard-AI/analyze-traffic">The repo</a></p>
-    </nav>
-    <div>
-      <p class="lede">Analyze Traffic is one of my projects. The README in the repo is short, so this page sticks to what the files themselves show.</p>
-      <div class="grid">
-        <div class="card pop"><h3>What it is</h3>
-          <p>Analyze Traffic: 5 files, 196 counted
-          lines across Python 169, Markdown 26, Text 1. One job, done in the
-          open, in files you can read.</p></div>
-        <div class="card pop"><h3>The biggest piece</h3>
-          <p><code>main.py</code> carries the most
-          lines. If the project grows, that file is where the growth
-          lands first, for better or worse.</p></div>
-        <div class="card pop"><h3>The honest gap</h3>
-          <p>No test files yet. That is the honest gap, and the roadmap in the visuals folder says what the first one should cover.</p></div>
-      </div>
-      <section id="run">
-        <h2>Run it</h2>
-        <p>The repo README has the exact commands for this one. The
-        shape is the shape for most of my projects: clone it, read the
-        top file first so you know what will happen, then run it on
-        something you do not mind breaking.</p>
-        <p class="mono">$ git clone https://github.com/ShadowGuard-AI/analyze-traffic.git<br>$ cd analyze-traffic</p>
-      </section>
-      
-  <section aria-label="real code">
-    <h2>The code, as it sits in the repo</h2>
-    <p>From <code>main.py</code>, line 7 on. I did
-    not tidy it for the page. What you see is what the file has.</p>
-    <pre class="code"><code>logging.basicConfig(level=logging.INFO, format=&#x27;%(asctime)s - %(levelname)s - %(message)s&#x27;)
-
-def setup_argparse():
-    &quot;&quot;&quot;
-    Sets up the argument parser for the command-line interface.
-    &quot;&quot;&quot;
-    parser = argparse.ArgumentParser(description=&quot;Analyze network traffic patterns - Focused on Data analysis and reporting.&quot;)
-    parser.add_argument(&quot;input_file&quot;, help=&quot;Path to the input traffic data file (e.g., CSV, PCAP).&quot;)
-    parser.add_argument(&quot;-o&quot;, &quot;--output_file&quot;, help=&quot;Path to the output report file (e.g., CSV, TXT).  Defaults to stdout.&quot;, default=None)
-    parser.add_argument(&quot;-f&quot;, &quot;--file_type&quot;, help=&quot;Type of the input file (csv, pcap, etc.).  Defaults to csv.&quot;, default=&quot;csv&quot;, choices=[&#x27;csv&#x27;, &#x27;pcap&#x27;])
-    parser.add_argument(&quot;-ip&quot;, &quot;--ip_address&quot;, help=&quot;Filter traffic by a specific IP address.&quot;, default=None)
-    parser.add_argument(&quot;-p&quot;, &quot;--port&quot;, type=int, help=&quot;Filter traffic by a specific port number.&quot;, default=None)
-    parser.add_argument(&quot;-proto&quot;, &quot;--protocol&quot;, help=&quot;Filter traffic by a specific protocol (e.g., TCP, UDP).&quot;, default=None)
-    parser.add_argument(&quot;-n&quot;, &quot;--num_rows&quot;, type=int, help=&quot;Number of rows to process.&quot;, default=None)
-    parser.add_argument(&quot;--src_ip&quot;, help=&quot;Filter by source IP.&quot;, default=None)
-    parser.add_argument(&quot;--dst_ip&quot;, help=&quot;Filter by destination IP.&quot;, default=None)
-    parser.add_argument(&quot;--src_port&quot;, type=int, help=&quot;Filter by source port.&quot;, default=None)
-    parser.add_argument(&quot;--dst_port&quot;, type=int, help=&quot;Filter by destination port.&quot;, default=None)
-
-    return parser.parse_args()</code></pre>
-  </section>
-      <section id="files">
-        <h2>The files that matter</h2>
-        <table><tr><th>File</th><th>Lines</th></tr>
-        <tr><td><code>main.py</code></td><td>169</td></tr>
-        <tr><td><code>README.md</code></td><td>26</td></tr>
-        <tr><td><code>requirements.txt</code></td><td>1</td></tr>
-        <tr><td><code>banner.png</code></td><td>0</td></tr>
-        <tr><td><code>logo.png</code></td><td>0</td></tr>
-        </table>
-        <p>Names doing the work: <span class="mono">setup_argparse, analyze_traffic, main</span>.</p>
-      </section>
-      <section id="sheets">
-        <h2>Drawn by hand</h2>
-        <p>I sketch my projects on notebook paper so I have to
-        understand them well enough to draw them. The full set,
-        with the counts and how they were counted, is the
-        <a href="https://github.com/ShadowGuard-AI/analyze-traffic/tree/main/analyze-traffic-Visuals">analyze-traffic-Visuals</a>
-        folder in the repo. Nothing is drawn over the binder holes.
-        That is a rule, not a style.</p>
-        <div class="shots">
-          <img src="assets/architecture.png" alt="Hand drawn architecture sheet for Analyze Traffic">
-          <img src="assets/flowchart.png" alt="Hand drawn flowchart sheet for Analyze Traffic">
-          <img src="assets/product-map.png" alt="Hand drawn product map sheet for Analyze Traffic">
-        </div>
-      </section>
-    </div>
-  </section>
+<section class="case" id="arrives"><h2>What Comes In Off the Street</h2>
+<p>analyze-traffic analyses network traffic patterns from a CSV file or a PCAP capture, a purpose the source files under data analysis and reporting. This panel names both arrivals without ranking one above the other, because the source treats them as two doors into the same columns.</p>
+<p>For CSV the columns are Source IP, Destination IP, Source Port, Destination Port, and Protocol, and the filters match on those columns. For PCAP the tool parses the capture itself, in the Python standard library, into those same columns plus Timestamp and Length. Both byte orders are read, and both timestamp resolutions, microsecond and nanosecond.</p>
+</section>
+<div class="rule"></div>
+<section class="case" id="frames"><h2>Frames the Bench Can Take</h2>
+<p>The link types are listed exactly as documented: Ethernet including VLAN tagged frames, raw IP as link types 101 and 12, Linux cooked capture v1 and v2 as 113 and 276, and loopback as 0. IPv4 and IPv6 packets are decoded for source and destination addresses, protocol, and TCP, UDP, or SCTP ports. Protocol is recorded as a name among TCP, UDP, ICMP, ICMPv6, IGMP, and SCTP, or as the IP protocol number for anything else.</p>
+<p>Packets that are not IP, such as ARP, are skipped and counted in the log. Other link types are not supported.</p>
+<h2>A Damaged Capture Stops the Job</h2>
+<p class="stop">A truncated or malformed capture is an error and the run exits 1, never reported as an empty result.</p>
+<p>A reader deciding whether to trust an empty looking report needs that line before any filter is touched, so it stands on its own ruled line on this bench.</p>
+</section>
+<div class="rule"></div>
+<section class="case"><h2>Taking the Tool Away and Setting It Going</h2>
+<pre>git clone https://github.com/ShadowStrikeHQ/analyze-traffic</pre>
+<pre>./analyze-traffic [params]</pre>
+<div class="tag"><h3>Maker's tag</h3>
+<p>The documented usage still names no input file argument, even though both input formats are described at length above it. The file is handed over by a means the source does not spell out in that line, and this page says so rather than guessing.</p></div>
+<p><a href="https://github.com/ShadowGuard-AI/analyze-traffic">The repository on GitHub</a></p>
+</section>
+<div class="rule"></div>
+<section class="case" id="pins"><h2>Pins in Their Recesses</h2>
+<div class="pin"><b>-h</b><span>Shows the help message and exits.</span></div>
+<div class="pin"><b>-o</b><span>Gives the path to the output report file and defaults to stdout.</span></div>
+<div class="pin"><b>-f</b><span>Gives the type of the input file, csv or pcap. A truncated or malformed capture exits 1.</span></div>
+<div class="pin"><b>-ip</b><span>Filters traffic by a specific IP address.</span></div>
+<div class="pin"><b>-p</b><span>Filters by a specific port number.</span></div>
+<div class="pin"><b>-proto</b><span>Filters by a specific protocol, for example TCP or UDP.</span></div>
+<div class="pin"><b>-n</b><span>Sets the number of rows to process.</span></div>
+<div class="pin"><b>--src_ip</b><span>Filters by source IP.</span></div>
+<div class="pin"><b>--dst_ip</b><span>Filters by destination IP.</span></div>
+<div class="pin"><b>--src_port</b><span>Filters by source port.</span></div>
+<div class="pin"><b>--dst_port</b><span>Filters by destination port.</span></div>
+</section>
+<div class="rule"></div>
+<section class="case" id="lid"><h2>What Is Stamped on the Lid</h2>
+<p>Licence is shown as the source shows it, with no licence named, and this panel does not dress that line up as a named licence:</p>
+<pre>Copyright (c) ShadowStrikeHQ</pre>
+</section>
 </main>
-<footer>
-  <p>Analyze Traffic is one of my projects. This page was written
-  from the repo itself on 2026-10-30: the counts are the
-  repo's counts, the code is the repo's code, and the gaps are the
-  repo's gaps.</p>
-</footer>
+<footer><p>Theme: The Sextant Maker's Window. Type: BIZ UDPGothic for headings, Bitter for reading, both SIL Open Font License 1.1. The lettering reference Frosty Christmas was reference only and is not embedded.</p></footer>
 </body>
 </html>
