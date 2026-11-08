@@ -3,97 +3,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>analyze-traffic: The Sextant Maker's Window</title>
-<meta name="description" content="Analyze network traffic patterns from a CSV file or a PCAP capture. Focused on data analysis and reporting.">
+<title>analyze-traffic: The Sluice Gate</title>
 <style>
-@font-face{font-family:'BIZ UDPGothic';src:url('fonts/BIZUDPGothic.ttf') format('truetype');}
-@font-face{font-family:'Bitter';src:url('fonts/Bitter.ttf') format('truetype');}
-:root{--slate:#2e3842;--slate2:#3a4652;--sea:#5e9684;--sealight:#7fb5a3;--chalk:#f2efe6;--brass:#b08d3c;--orange:#e86a1e;--ink:#22281f}
-*{box-sizing:border-box}body{margin:0;background:var(--slate);color:var(--chalk);font-family:'Bitter',serif;line-height:1.65}
-h1,h2,h3{font-family:'BIZ UDPGothic',sans-serif}
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;background:var(--slate)}
-.hero img.heroimg{width:100%;height:60vh;object-fit:cover;display:block}
-.hero .in{padding:1rem 6vw 2rem;max-width:1120px;margin:0 auto;width:100%}
-.logo{width:190px;border-radius:6px}
-main{padding:0 6vw 3rem;max-width:1120px;margin:0 auto}
-nav{display:flex;gap:.9rem;flex-wrap:wrap;margin:1.2rem 0}
-.clasp{display:inline-block;text-decoration:none;color:var(--chalk);font-family:'BIZ UDPGothic',sans-serif;font-size:.92rem;padding:.55rem 1.3rem;background:var(--slate2);border:4px solid var(--brass);border-radius:999px;box-shadow:inset 0 0 0 2px var(--slate);transition:transform .1s,border-color .15s}
-.clasp:hover{border-color:var(--sealight)}
-.clasp:active{transform:translateY(4px)}
-.clasp:focus-visible{outline:3px solid var(--orange);outline-offset:-7px}
-.case{background:linear-gradient(160deg,#46635a,#3c574f);border:10px solid #24382f;border-radius:8px;box-shadow:inset 0 0 0 2px rgba(242,239,230,.35),inset 0 0 34px rgba(0,0,0,.35);padding:.4rem 1.5rem 1.3rem;margin:1.8rem 0}
-.case h2{border-bottom:1px solid rgba(242,239,230,.4);padding-bottom:.4rem}
-pre{background:#1d262e;color:var(--chalk);padding:1rem;overflow-x:auto;font-size:.95rem}
-a{color:#ffd9a8}
-a::before{content:'';display:inline-block;width:17px;height:8px;margin-right:.45em;vertical-align:2px;background:linear-gradient(100deg,#efece0 60%,#c9c4ae);border-radius:100% 4px 100% 4px;transform:rotate(-24deg)}
-.clasp::before{content:none}
-.rule{height:10px;margin:2.2rem 0;position:relative;background:repeating-linear-gradient(to right,var(--brass) 0 2px,transparent 2px 46px),linear-gradient(var(--brass),var(--brass));background-size:100% 10px,100% 2px;background-position:0 0,0 4px;background-repeat:no-repeat}
-.rule::after{content:'';position:absolute;left:50%;top:0;width:3px;height:10px;background:var(--orange)}
-.pin{display:flex;gap:1rem;padding:.5rem 0;border-bottom:1px solid rgba(242,239,230,.22)}
-.pin b{font-family:'BIZ UDPGothic',sans-serif;min-width:104px;color:#ffe9b0}
-.tag{background:#e9e2c8;color:var(--ink);border-radius:4px;padding:.2rem 1.3rem 1rem;margin:1.3rem 0;position:relative}
-.tag::before{content:'';position:absolute;top:10px;left:12px;width:12px;height:12px;border:2px solid #8a8266;border-radius:50%;background:var(--slate)}
-.tag h3{font-family:'BIZ UDPGothic',sans-serif;margin-left:1.4rem}
-.stop{border-top:3px solid var(--orange);padding-top:.6rem;font-weight:700}
-footer{padding:1rem 6vw 2.4rem;max-width:1120px;margin:0 auto}
+@font-face { font-family: 'Encode Sans Condensed'; src: url('fonts/EncodeSansCondensed-400.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Encode Sans Condensed'; src: url('fonts/EncodeSansCondensed-700.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'Figtree'; src: url('fonts/Figtree-400.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Figtree'; src: url('fonts/Figtree-700.woff2') format('woff2'); font-weight: 700; }
+:root { --stone: #5d5a52; --race: #3e6b4f; --timber: #5f4630; --wheel: #c22f24; --paper: #f2f2ec; --ink: #22271f; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Figtree', sans-serif; background: var(--paper); color: var(--ink); line-height: 1.6; }
+header.top { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; background: var(--stone); color: #eceade; border-bottom: 5px solid var(--race); }
+.wordmark { font-weight: 700; letter-spacing: .03em; }
+.flake { color: #f0a49c; font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; }
+.hero { text-align: center; padding: 50px 22px 8px; }
+.hero img.logo { width: 300px; max-width: 80%; height: auto; border: 5px solid var(--stone); }
+h1 { font-family: 'Encode Sans Condensed', sans-serif; font-weight: 700; font-size: 2.5rem; margin: 18px 0 6px; color: var(--stone); }
+h2 { font-family: 'Encode Sans Condensed', sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--stone); border-bottom: 3px solid #cfd0c2; padding-bottom: 5px; margin-top: 38px; }
+.tag { max-width: 43rem; margin: 0 auto; }
+.buttons { margin: 22px 0 6px; }
+.buttons a { display: inline-block; margin: 4px; padding: 11px 22px; background: var(--race); color: #fff; font-weight: 700; text-decoration: none; border-radius: 4px; }
+.buttons a.alt { background: transparent; color: var(--stone); border: 2px solid var(--stone); }
+figure.wide { max-width: 1020px; margin: 24px auto; padding: 0 18px; }
+figure.wide img { width: 100%; height: auto; display: block; border: 1px solid #cfd0c2; }
+figcaption { color: #70705f; font-size: .9rem; padding-top: 8px; text-align: center; }
+.strip { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; padding: 20px 18px; }
+.strip div { background: #fff; border: 1px solid #cfd0c2; border-top: 4px solid var(--wheel); padding: 13px 18px; min-width: 180px; text-align: center; }
+.strip b { display: block; font-family: 'Encode Sans Condensed', sans-serif; font-weight: 700; color: var(--stone); font-size: 1.05rem; }
+main { max-width: 880px; margin: 0 auto; padding: 8px 22px 30px; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #cfd0c2; padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: var(--stone); color: #eceade; }
+code { background: #e2e4d2; padding: 1px 6px; border-radius: 3px; }
+.hold { border-left: 5px solid var(--wheel); background: #f3e9e2; padding: 13px 18px; }
+footer { text-align: center; padding: 24px 18px 32px; color: #70705f; font-size: .9rem; border-top: 5px solid var(--race); margin-top: 28px; }
 </style>
 </head>
 <body>
-<header class="hero">
-<img class="heroimg" src="assets/intro-banner.png" alt="A sextant maker's bench under a salt filmed window: a flat sextant frame, finished sextants on a shelf, rolled charts, no text">
-<div class="in">
-<img class="logo" src="assets/logo.png" alt="A brass sextant in profile with two small mirror glasses, above the name analyze-traffic in chalk white">
-<h1>analyze-traffic</h1>
-<p>The maker's bench laid out left to right in the order work reaches him. Files arrive the way instruments arrive, and they are taken apart against known columns.</p>
-<nav>
-<a class="clasp" href="#arrives">What Comes In Off the Street</a>
-<a class="clasp" href="#frames">Frames the Bench Can Take</a>
-<a class="clasp" href="#pins">Pins in Their Recesses</a>
-<a class="clasp" href="#lid">What Is Stamped on the Lid</a>
-</nav>
+<header class="top"><span class="wordmark">analyze-traffic</span><span class="flake">The whole stream, read at one gate</span></header>
+<section class="hero">
+<img class="logo" src="assets/logo.png" alt="Timber sluice gate straight on across a narrow mill race, green water pouring through the gap under its boards, one red wheel handle on the beam above the gate and grey stone wall at either side">
+<h1>The Sluice Gate</h1>
+<p class="tag">Analyzes network traffic patterns from a CSV file or a PCAP capture. The whole stream is channelled through one reading gate: PCAP input is parsed by the tool itself, in the Python standard library, and decoded packet by packet, and what cannot be read is turned aside and counted rather than passed off as nothing.</p>
+<p class="buttons"><a href="https://github.com/ShadowGuard-AI/analyze-traffic">View on GitHub</a> <a class="alt" href="https://github.com/ShadowGuard-AI/analyze-traffic#readme">Read the README</a></p>
+</section>
+<figure class="wide"><img src="assets/intro-banner.png" alt="Sluice gate close up as the race pours through the gap under its boards, foam and green water at the sill and the red wheel handle sharp above"><figcaption>The gate close up: the race pouring through the gap under the boards.</figcaption></figure>
+<div class="strip">
+<div><b>Two formats</b>CSV and PCAP</div>
+<div><b>Own parser</b>PCAP read in the standard library</div>
+<div><b>IPv4 and IPv6</b>both decoded</div>
+<div><b>pandas</b>the one requirement</div>
 </div>
-</header>
 <main>
-<section class="case" id="arrives"><h2>What Comes In Off the Street</h2>
-<p>analyze-traffic analyses network traffic patterns from a CSV file or a PCAP capture, a purpose the source files under data analysis and reporting. This panel names both arrivals without ranking one above the other, because the source treats them as two doors into the same columns.</p>
-<p>For CSV the columns are Source IP, Destination IP, Source Port, Destination Port, and Protocol, and the filters match on those columns. For PCAP the tool parses the capture itself, in the Python standard library, into those same columns plus Timestamp and Length. Both byte orders are read, and both timestamp resolutions, microsecond and nanosecond.</p>
-</section>
-<div class="rule"></div>
-<section class="case" id="frames"><h2>Frames the Bench Can Take</h2>
-<p>The link types are listed exactly as documented: Ethernet including VLAN tagged frames, raw IP as link types 101 and 12, Linux cooked capture v1 and v2 as 113 and 276, and loopback as 0. IPv4 and IPv6 packets are decoded for source and destination addresses, protocol, and TCP, UDP, or SCTP ports. Protocol is recorded as a name among TCP, UDP, ICMP, ICMPv6, IGMP, and SCTP, or as the IP protocol number for anything else.</p>
-<p>Packets that are not IP, such as ARP, are skipped and counted in the log. Other link types are not supported.</p>
-<h2>A Damaged Capture Stops the Job</h2>
-<p class="stop">A truncated or malformed capture is an error and the run exits 1, never reported as an empty result.</p>
-<p>A reader deciding whether to trust an empty looking report needs that line before any filter is touched, so it stands on its own ruled line on this bench.</p>
-</section>
-<div class="rule"></div>
-<section class="case"><h2>Taking the Tool Away and Setting It Going</h2>
-<pre>git clone https://github.com/ShadowStrikeHQ/analyze-traffic</pre>
-<pre>./analyze-traffic [params]</pre>
-<div class="tag"><h3>Maker's tag</h3>
-<p>The documented usage still names no input file argument, even though both input formats are described at length above it. The file is handed over by a means the source does not spell out in that line, and this page says so rather than guessing.</p></div>
-<p><a href="https://github.com/ShadowGuard-AI/analyze-traffic">The repository on GitHub</a></p>
-</section>
-<div class="rule"></div>
-<section class="case" id="pins"><h2>Pins in Their Recesses</h2>
-<div class="pin"><b>-h</b><span>Shows the help message and exits.</span></div>
-<div class="pin"><b>-o</b><span>Gives the path to the output report file and defaults to stdout.</span></div>
-<div class="pin"><b>-f</b><span>Gives the type of the input file, csv or pcap. A truncated or malformed capture exits 1.</span></div>
-<div class="pin"><b>-ip</b><span>Filters traffic by a specific IP address.</span></div>
-<div class="pin"><b>-p</b><span>Filters by a specific port number.</span></div>
-<div class="pin"><b>-proto</b><span>Filters by a specific protocol, for example TCP or UDP.</span></div>
-<div class="pin"><b>-n</b><span>Sets the number of rows to process.</span></div>
-<div class="pin"><b>--src_ip</b><span>Filters by source IP.</span></div>
-<div class="pin"><b>--dst_ip</b><span>Filters by destination IP.</span></div>
-<div class="pin"><b>--src_port</b><span>Filters by source port.</span></div>
-<div class="pin"><b>--dst_port</b><span>Filters by destination port.</span></div>
-</section>
-<div class="rule"></div>
-<section class="case" id="lid"><h2>What Is Stamped on the Lid</h2>
-<p>Licence is shown as the source shows it, with no licence named, and this panel does not dress that line up as a named licence:</p>
-<pre>Copyright (c) ShadowStrikeHQ</pre>
-</section>
+<h2>What it does</h2>
+<p>CSV input is read with the columns Source IP, Destination IP, Source Port, Destination Port, and Protocol, and the filters below match on those columns. PCAP input (<code>-f pcap</code>) is parsed into the same columns, plus Timestamp and Length. Both byte orders and both timestamp resolutions (microsecond and nanosecond) are read. Supported link types are Ethernet (including VLAN tagged frames), raw IP (link types 101 and 12), Linux cooked capture v1 and v2 (113 and 276), and loopback (0). IPv4 and IPv6 packets are decoded: source and destination addresses, protocol, and the TCP, UDP, or SCTP ports. Protocol is recorded as a name (TCP, UDP, ICMP, ICMPv6, IGMP, SCTP) or as the IP protocol number for anything else.</p>
+<figure class="wide" style="padding:0;margin:18px 0;"><img src="assets/banner.png" alt="Mill race running the width of the frame channelled through one timber sluice gate at its centre, the water green and fast under the boards, a side rack at the frame edge holding caught branches the gate turned back and the red wheel handle standing above the beam"></figure>
+<h2>Parameters</h2>
+<table>
+<tr><th>Parameter</th><th>What the README says</th></tr>
+<tr><td><code>-h</code></td><td>Show help message and exit</td></tr>
+<tr><td><code>-o</code></td><td>Path to the output report file. Defaults to stdout</td></tr>
+<tr><td><code>-f</code></td><td>Type of the input file: csv or pcap. PCAP captures are parsed as described above; a truncated or malformed capture exits 1</td></tr>
+<tr><td><code>-ip</code></td><td>Filter traffic by a specific IP address</td></tr>
+<tr><td><code>-p</code></td><td>Filter traffic by a specific port number</td></tr>
+<tr><td><code>-proto</code></td><td>Filter traffic by a specific protocol (e.g., TCP, UDP)</td></tr>
+<tr><td><code>-n</code></td><td>Number of rows to process</td></tr>
+<tr><td><code>--src_ip</code></td><td>Filter by source IP</td></tr>
+<tr><td><code>--dst_ip</code></td><td>Filter by destination IP</td></tr>
+<tr><td><code>--src_port</code></td><td>Filter by source port</td></tr>
+<tr><td><code>--dst_port</code></td><td>Filter by destination port</td></tr>
+</table>
+<h2>Stated limits</h2>
+<div class="hold"><p>Packets that are not IP, such as ARP, are skipped and counted in the log. Other link types are not supported. A truncated or malformed capture is an error and the run exits 1; it is never reported as an empty result. The usage line names no input file argument: how the CSV or PCAP file itself is supplied is not spelled out in that line. Licence: the README closes with a copyright line and names no licence.</p></div>
 </main>
-<footer><p>Theme: The Sextant Maker's Window. Type: BIZ UDPGothic for headings, Bitter for reading, both SIL Open Font License 1.1. The lettering reference Frosty Christmas was reference only and is not embedded.</p></footer>
+<footer>analyze-traffic, channelled and read. Fonts: Encode Sans Condensed and Figtree, self-hosted under the SIL Open Font License.</footer>
 </body>
 </html>

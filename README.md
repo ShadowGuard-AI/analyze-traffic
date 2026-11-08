@@ -1,10 +1,10 @@
-![The sextant maker's shop before any name is given: a flat sextant frame on the bench, finished sextants on the shelf, rolled charts, feathers on the sill, no readable mark anywhere](intro-banner.png)
+![Sluice gate close up as the race pours through the gap under its boards, foam and green water at the sill and the red wheel handle sharp above](intro-banner.png)
 
 # analyze-traffic
 
-![The shop window with the name painted in reverse on the inside of the glass, read from the street, one buoy orange stroke under the final letter](banner.png)
+![Mill race running the width of the frame channelled through one timber sluice gate at its centre, the water green and fast under the boards, a side rack at the frame edge holding caught branches the gate turned back and the red wheel handle standing above the beam](banner.png)
 
-![Brass sextant in profile with horizon and shade glasses and two mirror flecks, the heading plate](logo.png)
+![Timber sluice gate straight on across a narrow mill race, green water pouring through the gap under its boards, one red wheel handle on the beam above the gate and grey stone wall at either side](logo.png)
 
 ![Bench scene in the shop window: masts sway far off in the doorway, a highlight travels along the shelf of finished sextants, dust drifts in the near light](scene.svg)
 
