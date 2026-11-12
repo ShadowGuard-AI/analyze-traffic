@@ -9,8 +9,7 @@
 ![Bench scene in the shop window: masts sway far off in the doorway, a highlight travels along the shelf of finished sextants, dust drifts in the near light](scene.svg)
 
 
-# analyze-traffic
-Analyze network traffic patterns from a CSV file or a PCAP capture - Focused on Data analysis and reporting
+Analyze network traffic patterns from a CSV file or a PCAP capture, focusing on data analysis and reporting.
 
 
 ![Section divider](sep-light.svg)
